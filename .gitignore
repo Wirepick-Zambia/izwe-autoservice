@@ -24,3 +24,4 @@ publish/
 
 ## pnpm
 node_modules/
+**/bin\*
