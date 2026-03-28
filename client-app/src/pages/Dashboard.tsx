@@ -4,11 +4,16 @@ import { api, type DashboardData } from '../api/client';
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
 
   const load = () => {
     setLoading(true);
-    api.getDashboard().then(setData).finally(() => setLoading(false));
+    setError('');
+    api.getDashboard()
+      .then(setData)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -24,7 +29,15 @@ export default function Dashboard() {
   };
 
   if (loading) return <div className="loading">Loading...</div>;
-  if (!data) return <div className="error">Failed to load dashboard</div>;
+  if (error) return (
+    <div className="page">
+      <div className="card">
+        <p className="text-danger">Failed to load dashboard: {error}</p>
+        <button onClick={load} className="btn btn-primary" style={{ marginTop: 8 }}>Retry</button>
+      </div>
+    </div>
+  );
+  if (!data) return null;
 
   return (
     <div className="page">

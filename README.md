@@ -403,38 +403,88 @@ Settings changes take effect on the **next processing cycle** — no restart req
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 18+](https://nodejs.org/) (for building the frontend)
+- [Node.js 18+](https://nodejs.org/)
+- [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
 
-### Build & Run
+### Development
 
-```bash
-# Clone and enter the project
-cd /path/to/izwe-autoservice
-
-# Install frontend dependencies and build to wwwroot
-cd client-app
-npm install
-npm run build
-cd ..
-
-# Run the application (auto-migrates the database on first start)
-dotnet run --project src/IzweAutoService.Api
-```
-
-The app starts on `http://localhost:5000` by default. Open it in a browser to access the portal.
-
-### Development Mode
-
-Run the backend and frontend separately for hot-reload:
+A single command starts both the .NET backend and the Vite dev server with hot-reload:
 
 ```bash
-# Terminal 1 — Backend
-dotnet run --project src/IzweAutoService.Api
-
-# Terminal 2 — Frontend (hot-reload on :5173, proxies /api to :5000)
-cd client-app
-npm run dev
+pnpm install
+pnpm dev
 ```
+
+This runs:
+- `[api]` .NET backend on `http://localhost:5000`
+- `[web]` Vite frontend on `http://localhost:5173` (proxies `/api` to `:5000`)
+
+Open `http://localhost:5173` in your browser.
+
+### Build for Production
+
+```bash
+pnpm build       # Build frontend to wwwroot
+pnpm publish     # Build frontend + publish .NET to ./publish/
+```
+
+---
+
+## Deployment
+
+### Windows Server — Option A: Windows Service (recommended)
+
+Runs as a background service without a user logged in.
+
+```powershell
+# 1. Build and publish
+pnpm publish
+
+# 2. Copy to the server
+Copy-Item -Recurse .\publish\ C:\izwe-sms\
+
+# 3. Configure the database (edit C:\izwe-sms\appsettings.json)
+#    Set DatabaseProvider and ConnectionStrings as needed (see "Switching Database Providers" below)
+
+# 4. Create the SMS folder structure
+New-Item -ItemType Directory -Force -Path C:\SFTP\SMS_Automation\Ghana
+New-Item -ItemType Directory -Force -Path C:\SFTP\SMS_Automation\Kenya
+New-Item -ItemType Directory -Force -Path C:\SFTP\SMS_Automation\SouthAfrica
+
+# 5. Install and start the Windows Service
+sc.exe create IzweSmsService binPath="C:\izwe-sms\IzweAutoService.Api.exe --urls http://0.0.0.0:5000" start=auto
+sc.exe start IzweSmsService
+```
+
+To check status: `sc.exe query IzweSmsService`
+
+To uninstall:
+```powershell
+sc.exe stop IzweSmsService
+sc.exe delete IzweSmsService
+```
+
+### Windows Server — Option B: IIS
+
+1. Install the [ASP.NET Core Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/10.0) on the server.
+2. Run `pnpm publish` on your build machine.
+3. Copy the `./publish/` folder to the server (e.g., `C:\inetpub\izwe-sms`).
+4. In IIS Manager, create a new site pointing to that folder.
+5. Set the Application Pool to **No Managed Code**.
+6. The included `web.config` handles in-process hosting automatically.
+
+### Post-deployment Configuration
+
+Both options auto-migrate the database on startup. Once the app is running, open the portal and configure:
+
+| Settings Page Section | What to set                                           |
+|-----------------------|-------------------------------------------------------|
+| **General**           | `BaseFolderPath` → `C:\SFTP\SMS_Automation`           |
+| **SMS Gateway**       | API URL, Client ID, Sender ID, API password           |
+| **SMTP**              | Mail server host, port, credentials, SSL              |
+| **Email Alerts**      | Toggle on, set From/To addresses                      |
+
+Settings take effect on the next processing cycle — no restart required.
 
 ---
 
