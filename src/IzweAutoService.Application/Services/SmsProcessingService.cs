@@ -40,7 +40,7 @@ public class SmsProcessingService
 
         try
         {
-            var basePath = await _settingsRepo.GetValueAsync("BaseFolderPath") ?? "/data/sms";
+            var basePath = await _settingsRepo.GetValueAsync("BaseFolderPath") ?? @"C:\SFTP\SMS_Automation";
             var senderId = await _settingsRepo.GetValueAsync("SenderId") ?? "IzweLoans";
             var clientId = await _settingsRepo.GetValueAsync("ClientId") ?? "WireGhana";
             var batchSizeStr = await _settingsRepo.GetValueAsync("SmsBatchSize") ?? "500";

@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Windows Service support — no-op on Linux/macOS
+builder.Host.UseWindowsService();
+
 // Add services
 builder.Services.AddControllers();
 builder.Services.AddInfrastructure(

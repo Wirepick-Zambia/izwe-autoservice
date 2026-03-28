@@ -38,7 +38,7 @@ public class AppDbContext : DbContext
             e.HasIndex(s => s.Key).IsUnique();
             e.HasIndex(s => s.Category);
             e.HasData(
-                new AppSetting { Id = 1, Key = "BaseFolderPath", Value = "/data/sms", Category = "General" },
+                new AppSetting { Id = 1, Key = "BaseFolderPath", Value = "C:\\SFTP\\SMS_Automation", Category = "General" },
                 new AppSetting { Id = 2, Key = "SenderId", Value = "IzweLoans", Category = "Sms" },
                 new AppSetting { Id = 3, Key = "ClientId", Value = "WireGhana", Category = "Sms" },
                 new AppSetting { Id = 4, Key = "ApiUrl", Value = "https://api.wirepick.com/httpsms/send", Category = "Sms" },
