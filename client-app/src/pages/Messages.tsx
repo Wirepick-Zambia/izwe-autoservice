@@ -116,11 +116,13 @@ export default function Messages() {
             <DetailRow label="Status" value={selected.status} badge={
               selected.status.toLowerCase() === 'sent' ? 'success' : selected.status.toLowerCase() === 'failed' ? 'danger' : 'warning'
             } />
+            {selected.sourceFile && <DetailRow label="Source File" value={selected.sourceFile} />}
             <DetailRow label="Message" value={selected.messageContent} full />
-            {selected.apiMessageId && <DetailRow label="API Message ID" value={selected.apiMessageId} />}
-            {selected.apiStatus && <DetailRow label="API Status" value={selected.apiStatus} />}
+            {selected.apiMessageId && <DetailRow label="Gateway Message ID" value={selected.apiMessageId} />}
+            {selected.apiStatus && <DetailRow label="Gateway Status" value={selected.apiStatus} full />}
+            {selected.apiCost != null && <DetailRow label="Cost" value={`${selected.apiCost} USD`} />}
             {selected.errorMessage && (
-              <DetailRow label="Error" value={selected.errorMessage} full error />
+              <DetailRow label="Failure Reason" value={selected.errorMessage} full error />
             )}
             <DetailRow label="Created" value={new Date(selected.createdAt).toLocaleString()} />
             <DetailRow label="Processed" value={selected.processedAt ? new Date(selected.processedAt).toLocaleString() : 'Not yet'} />

@@ -42,7 +42,9 @@ export interface SmsRecord {
   status: string;
   apiMessageId: string | null;
   apiStatus: string | null;
+  apiCost: number | null;
   errorMessage: string | null;
+  sourceFile: string | null;
   createdAt: string;
   processedAt: string | null;
 }

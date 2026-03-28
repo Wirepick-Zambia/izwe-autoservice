@@ -9,7 +9,9 @@ public record SmsRecordDto(
     string Status,
     string? ApiMessageId,
     string? ApiStatus,
+    decimal? ApiCost,
     string? ErrorMessage,
+    string? SourceFile,
     DateTime CreatedAt,
     DateTime? ProcessedAt
 );
