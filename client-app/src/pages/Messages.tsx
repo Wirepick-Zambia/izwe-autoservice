@@ -124,6 +124,12 @@ export default function Messages() {
             {selected.errorMessage && (
               <DetailRow label="Failure Reason" value={selected.errorMessage} full error />
             )}
+            {selected.rawResponse && (
+              <div className="detail-row detail-full">
+                <span className="detail-label">Raw Gateway Response</span>
+                <pre className="raw-response">{selected.rawResponse}</pre>
+              </div>
+            )}
             <DetailRow label="Created" value={new Date(selected.createdAt).toLocaleString()} />
             <DetailRow label="Processed" value={selected.processedAt ? new Date(selected.processedAt).toLocaleString() : 'Not yet'} />
           </div>

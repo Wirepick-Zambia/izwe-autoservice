@@ -44,6 +44,7 @@ export interface SmsRecord {
   apiStatus: string | null;
   apiCost: number | null;
   errorMessage: string | null;
+  rawResponse: string | null;
   sourceFile: string | null;
   createdAt: string;
   processedAt: string | null;

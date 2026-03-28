@@ -18,6 +18,7 @@ public class SmsRecord
     public string? ApiStatus { get; set; }
     public decimal? ApiCost { get; set; }
     public string? ErrorMessage { get; set; }
+    public string? RawResponse { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ProcessedAt { get; set; }
 }

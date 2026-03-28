@@ -1,6 +1,6 @@
 namespace IzweAutoService.Application.Interfaces;
 
-public record SmsGatewayResult(bool Success, string? MessageId, string? Status, decimal? Cost, string? Error);
+public record SmsGatewayResult(bool Success, string? MessageId, string? Status, decimal? Cost, string? Error, string? RawResponse);
 
 public interface ISmsGateway
 {

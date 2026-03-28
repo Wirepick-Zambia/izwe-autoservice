@@ -457,6 +457,20 @@ tr:hover td {
   word-break: break-word;
 }
 
+/* Raw response */
+.raw-response {
+  background: #1a1f36;
+  color: #e5e7eb;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 4px 0 0;
+  overflow-x: auto;
+}
+
 /* Misc */
 .loading {
   padding: 40px;

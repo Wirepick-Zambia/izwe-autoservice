@@ -19,7 +19,7 @@ public class SmsQueryService
             Items: items.Select(r => new SmsRecordDto(
                 r.Id, r.ContractId, r.PhoneNumber, r.MessageContent, r.Country,
                 r.Status.ToString(), r.ApiMessageId, r.ApiStatus, r.ApiCost,
-                r.ErrorMessage, r.SourceFile, r.CreatedAt, r.ProcessedAt
+                r.ErrorMessage, r.RawResponse, r.SourceFile, r.CreatedAt, r.ProcessedAt
             )).ToList(),
             TotalCount: total,
             Page: page,

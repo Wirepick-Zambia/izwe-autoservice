@@ -100,14 +100,14 @@ public class WirePickSmsGateway : ISmsGateway
         catch (Exception ex)
         {
             _logger.LogError(ex, "SMS gateway request failed for {Phone}", phoneNumber);
-            return new SmsGatewayResult(false, null, null, null, ex.Message);
+            return new SmsGatewayResult(false, null, null, null, ex.Message, null);
         }
     }
 
-    private SmsGatewayResult ParseResponse(string response, string phoneNumber)
+    private SmsGatewayResult ParseResponse(string raw, string phoneNumber)
     {
-        if (string.IsNullOrWhiteSpace(response))
-            return new SmsGatewayResult(false, null, null, null, "Empty response from gateway");
+        if (string.IsNullOrWhiteSpace(raw))
+            return new SmsGatewayResult(false, null, null, null, "Empty response from gateway", raw);
 
         try
         {
@@ -115,41 +115,37 @@ public class WirePickSmsGateway : ISmsGateway
             // MessageId Phone Status Date Time Cost Qty UnitPrice Currency
             // e.g.: 6442080299942398490 260979263249 ACT 2026-03-28 11:58:57 0.03 1 0.03 USD
 
-            // Find the result line matching this phone number
-            var lines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var lines = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
+            // Find the result line matching this phone number
             foreach (var line in lines)
             {
                 var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length < 5) continue;
 
-                // Match by phone number (parts[1]) — strip leading + or 0s for flexible matching
                 var responsePhone = parts[1];
                 if (responsePhone == phoneNumber || phoneNumber.EndsWith(responsePhone) || responsePhone.EndsWith(phoneNumber.TrimStart('+')))
-                {
-                    return ParseResultParts(parts);
-                }
+                    return ParseResultParts(parts, raw);
             }
 
-            // If no phone match found, try parsing the first valid result
-            // (single SMS send typically returns one line)
+            // Single SMS send typically returns one line — parse the first valid result
             foreach (var line in lines)
             {
                 var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length >= 5)
-                    return ParseResultParts(parts);
+                    return ParseResultParts(parts, raw);
             }
 
-            return new SmsGatewayResult(false, null, null, null, $"Could not parse response: {response}");
+            return new SmsGatewayResult(false, null, null, null, $"Could not parse response", raw);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to parse gateway response: {Response}", response);
-            return new SmsGatewayResult(false, null, null, null, $"Parse error: {ex.Message}");
+            _logger.LogWarning(ex, "Failed to parse gateway response: {Response}", raw);
+            return new SmsGatewayResult(false, null, null, null, $"Parse error: {ex.Message}", raw);
         }
     }
 
-    private static SmsGatewayResult ParseResultParts(string[] parts)
+    private static SmsGatewayResult ParseResultParts(string[] parts, string raw)
     {
         // parts: [0]=MessageId [1]=Phone [2]=Status [3]=Date [4]=Time [5]=Cost [6]=Qty [7]=UnitPrice [8]=Currency
         var messageId = parts[0];
@@ -166,7 +162,8 @@ public class WirePickSmsGateway : ISmsGateway
             messageId,
             statusDisplay,
             cost,
-            success ? null : statusDisplay
+            success ? null : statusDisplay,
+            raw
         );
     }
 }

@@ -86,6 +86,7 @@ public class SmsProcessingService
                         record.PhoneNumber, record.MessageContent, record.SenderId, record.ClientId);
 
                     record.ProcessedAt = DateTime.UtcNow;
+                    record.RawResponse = result.RawResponse;
 
                     if (result.Success)
                     {
@@ -98,6 +99,7 @@ public class SmsProcessingService
                     else
                     {
                         record.Status = SmsStatus.Failed;
+                        record.ApiStatus = result.Status;
                         record.ErrorMessage = Truncate(result.Error, 500);
                         failed++;
                     }

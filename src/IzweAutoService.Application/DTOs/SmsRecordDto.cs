@@ -11,6 +11,7 @@ public record SmsRecordDto(
     string? ApiStatus,
     decimal? ApiCost,
     string? ErrorMessage,
+    string? RawResponse,
     string? SourceFile,
     DateTime CreatedAt,
     DateTime? ProcessedAt
