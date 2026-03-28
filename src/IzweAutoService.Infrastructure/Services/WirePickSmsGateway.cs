@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml.Linq;
 using IzweAutoService.Application.Interfaces;
 using IzweAutoService.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -111,32 +112,18 @@ public class WirePickSmsGateway : ISmsGateway
 
         try
         {
-            // Response format (space-delimited, one result per line or concatenated):
+            var trimmed = raw.TrimStart();
+
+            // XML format:
+            // <messages><sms><msgid>...</msgid><phone>...</phone><status>ACT</status>
+            //   <recd_time>...</recd_time><unit_price>0.01</unit_price>
+            //   <num_sms>1</num_sms><total_cost>0.01</total_cost><currency>USD</currency></sms></messages>
+            if (trimmed.StartsWith('<'))
+                return ParseXmlResponse(raw, phoneNumber);
+
+            // Plain text fallback (space-delimited):
             // MessageId Phone Status Date Time Cost Qty UnitPrice Currency
-            // e.g.: 6442080299942398490 260979263249 ACT 2026-03-28 11:58:57 0.03 1 0.03 USD
-
-            var lines = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            // Find the result line matching this phone number
-            foreach (var line in lines)
-            {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 5) continue;
-
-                var responsePhone = parts[1];
-                if (responsePhone == phoneNumber || phoneNumber.EndsWith(responsePhone) || responsePhone.EndsWith(phoneNumber.TrimStart('+')))
-                    return ParseResultParts(parts, raw);
-            }
-
-            // Single SMS send typically returns one line — parse the first valid result
-            foreach (var line in lines)
-            {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 5)
-                    return ParseResultParts(parts, raw);
-            }
-
-            return new SmsGatewayResult(false, null, null, null, $"Could not parse response", raw);
+            return ParseTextResponse(raw, phoneNumber);
         }
         catch (Exception ex)
         {
@@ -145,12 +132,26 @@ public class WirePickSmsGateway : ISmsGateway
         }
     }
 
-    private static SmsGatewayResult ParseResultParts(string[] parts, string raw)
+    private SmsGatewayResult ParseXmlResponse(string raw, string phoneNumber)
     {
-        // parts: [0]=MessageId [1]=Phone [2]=Status [3]=Date [4]=Time [5]=Cost [6]=Qty [7]=UnitPrice [8]=Currency
-        var messageId = parts[0];
-        var statusCode = parts[2];
-        var cost = parts.Length > 5 ? decimal.TryParse(parts[5], CultureInfo.InvariantCulture, out var c) ? c : (decimal?)null : null;
+        var doc = XDocument.Parse(raw);
+        var smsElements = doc.Descendants("sms").ToList();
+
+        if (smsElements.Count == 0)
+            return new SmsGatewayResult(false, null, null, null, "No <sms> element in response", raw);
+
+        // Match by phone number if multiple results, otherwise take the first
+        var sms = smsElements.Count > 1
+            ? smsElements.FirstOrDefault(e =>
+            {
+                var p = e.Element("phone")?.Value ?? "";
+                return p == phoneNumber || phoneNumber.EndsWith(p) || p.EndsWith(phoneNumber.TrimStart('+'));
+            }) ?? smsElements[0]
+            : smsElements[0];
+
+        var messageId = sms.Element("msgid")?.Value;
+        var statusCode = sms.Element("status")?.Value ?? "";
+        var totalCost = decimal.TryParse(sms.Element("total_cost")?.Value, CultureInfo.InvariantCulture, out var c) ? c : (decimal?)null;
         var success = SuccessStatuses.Contains(statusCode);
 
         var statusDisplay = StatusDescriptions.TryGetValue(statusCode, out var desc)
@@ -161,9 +162,49 @@ public class WirePickSmsGateway : ISmsGateway
             success,
             messageId,
             statusDisplay,
-            cost,
+            totalCost,
             success ? null : statusDisplay,
             raw
         );
+    }
+
+    private static SmsGatewayResult ParseTextResponse(string raw, string phoneNumber)
+    {
+        // Format: MessageId Phone Status Date Time Cost Qty UnitPrice Currency
+        var lines = raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 5) continue;
+
+            var responsePhone = parts[1];
+            if (responsePhone == phoneNumber || phoneNumber.EndsWith(responsePhone) || responsePhone.EndsWith(phoneNumber.TrimStart('+')))
+                return BuildTextResult(parts, raw);
+        }
+
+        // Single SMS — take the first valid line
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 5)
+                return BuildTextResult(parts, raw);
+        }
+
+        return new SmsGatewayResult(false, null, null, null, "Could not parse response", raw);
+    }
+
+    private static SmsGatewayResult BuildTextResult(string[] parts, string raw)
+    {
+        var messageId = parts[0];
+        var statusCode = parts[2];
+        var cost = parts.Length > 5 ? decimal.TryParse(parts[5], CultureInfo.InvariantCulture, out var c) ? c : (decimal?)null : null;
+        var success = SuccessStatuses.Contains(statusCode);
+
+        var statusDisplay = StatusDescriptions.TryGetValue(statusCode, out var desc)
+            ? $"{statusCode} — {desc}"
+            : statusCode;
+
+        return new SmsGatewayResult(success, messageId, statusDisplay, cost, success ? null : statusDisplay, raw);
     }
 }
