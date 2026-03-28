@@ -28,12 +28,18 @@ public class CsvFileProcessor : IFileProcessor
             var pendingDir = Path.Combine(countryDir, "pending");
             Directory.CreateDirectory(pendingDir);
 
+            // Move new files from country root into pending/
             foreach (var file in Directory.GetFiles(countryDir, "*.csv"))
             {
                 var dest = Path.Combine(pendingDir, Path.GetFileName(file));
                 File.Move(file, dest, overwrite: true);
-                files.Add(dest);
                 _logger.LogInformation("Moved {File} to pending", Path.GetFileName(file));
+            }
+
+            // Pick up all files in pending/ (including those placed there directly)
+            foreach (var file in Directory.GetFiles(pendingDir, "*.csv"))
+            {
+                files.Add(file);
             }
         }
 
