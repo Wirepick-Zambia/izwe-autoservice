@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api, type SmsPagedResult } from '../api/client';
+import { api, type SmsRecord, type SmsPagedResult } from '../api/client';
+import Modal from '../components/Modal';
 
 export default function Messages() {
   const [data, setData] = useState<SmsPagedResult | null>(null);
@@ -7,6 +8,7 @@ export default function Messages() {
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<SmsRecord | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -74,7 +76,7 @@ export default function Messages() {
               </thead>
               <tbody>
                 {data.items.map(sms => (
-                  <tr key={sms.id}>
+                  <tr key={sms.id} className="clickable-row" onClick={() => setSelected(sms)}>
                     <td>{sms.contractId}</td>
                     <td>{sms.phoneNumber}</td>
                     <td>{sms.country}</td>
@@ -103,6 +105,47 @@ export default function Messages() {
           </>
         )}
       </div>
+
+      <Modal open={!!selected} onClose={() => setSelected(null)} title="Message Details">
+        {selected && (
+          <div className="detail-grid">
+            <DetailRow label="ID" value={String(selected.id)} />
+            <DetailRow label="Contract ID" value={selected.contractId} />
+            <DetailRow label="Phone Number" value={selected.phoneNumber} />
+            <DetailRow label="Country" value={selected.country} />
+            <DetailRow label="Status" value={selected.status} badge={
+              selected.status.toLowerCase() === 'sent' ? 'success' : selected.status.toLowerCase() === 'failed' ? 'danger' : 'warning'
+            } />
+            <DetailRow label="Message" value={selected.messageContent} full />
+            {selected.apiMessageId && <DetailRow label="API Message ID" value={selected.apiMessageId} />}
+            {selected.apiStatus && <DetailRow label="API Status" value={selected.apiStatus} />}
+            {selected.errorMessage && (
+              <DetailRow label="Error" value={selected.errorMessage} full error />
+            )}
+            <DetailRow label="Created" value={new Date(selected.createdAt).toLocaleString()} />
+            <DetailRow label="Processed" value={selected.processedAt ? new Date(selected.processedAt).toLocaleString() : 'Not yet'} />
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+function DetailRow({ label, value, badge, full, error }: {
+  label: string;
+  value: string;
+  badge?: string;
+  full?: boolean;
+  error?: boolean;
+}) {
+  return (
+    <div className={`detail-row${full ? ' detail-full' : ''}`}>
+      <span className="detail-label">{label}</span>
+      {badge ? (
+        <span className={`badge badge-${badge}`}>{value}</span>
+      ) : (
+        <span className={`detail-value${error ? ' text-danger' : ''}`}>{value}</span>
+      )}
     </div>
   );
 }
