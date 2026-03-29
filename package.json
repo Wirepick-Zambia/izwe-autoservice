@@ -1,5 +1,6 @@
 {
   "name": "izwe-autoservice",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"dotnet run --project src/IzweAutoService.Api\" \"pnpm --filter client-app dev\"",
