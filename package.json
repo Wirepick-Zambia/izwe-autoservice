@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"dotnet run --project src/IzweAutoService.Api\" \"pnpm --filter client-app dev\"",
     "build": "pnpm --filter client-app build",
-    "publish": "pnpm build && dotnet publish src/IzweAutoService.Api -c Release -o ./publish"
+    "release": "pnpm build && dotnet publish src/IzweAutoService.Api -c Release -o ./publish"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
