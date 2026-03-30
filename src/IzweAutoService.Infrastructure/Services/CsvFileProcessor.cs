@@ -56,7 +56,8 @@ public class CsvFileProcessor : IFileProcessor
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
 
-            var parts = line.Split('|');
+            var delimiter = line.Contains('|') ? '|' : ',';
+            var parts = line.Split(delimiter);
             if (parts.Length < 3)
             {
                 _logger.LogWarning("Skipping malformed line in {File}: {Line}", fileName, line);
