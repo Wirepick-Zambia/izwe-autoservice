@@ -52,6 +52,7 @@ public class SmsRepository : ISmsRepository
 
         var newRecords = recordList
             .Where(r => !existingKeys.Contains($"{r.ContractId}|{r.PhoneNumber}|{r.SourceFile}"))
+            .DistinctBy(r => $"{r.ContractId}|{r.PhoneNumber}|{r.SourceFile}")
             .ToList();
 
         var skipped = recordList.Count - newRecords.Count;
