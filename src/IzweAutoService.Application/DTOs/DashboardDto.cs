@@ -16,5 +16,6 @@ public record ProcessingLogDto(
     int TotalFound,
     int TotalSent,
     int TotalFailed,
+    int TotalSkipped,
     string? ErrorMessage
 );

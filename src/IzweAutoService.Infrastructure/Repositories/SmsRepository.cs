@@ -35,13 +35,34 @@ public class SmsRepository : ISmsRepository
     public async Task<int> GetCountAsync(SmsStatus? status, string? country, string? search)
         => await BuildQuery(status, country, search).CountAsync();
 
-    public async Task AddBatchAsync(IEnumerable<SmsRecord> records, int chunkSize = 5000)
+    public async Task<int> AddBatchAsync(IEnumerable<SmsRecord> records, int chunkSize = 5000)
     {
-        foreach (var chunk in records.Chunk(chunkSize))
+        var recordList = records.ToList();
+        if (recordList.Count == 0) return 0;
+
+        // Check for existing records to skip duplicates (UNIQUE: ContractId + PhoneNumber + SourceFile)
+        var sourceFiles = recordList.Select(r => r.SourceFile).Distinct().ToList();
+        var existing = await _db.SmsRecords
+            .Where(r => sourceFiles.Contains(r.SourceFile))
+            .Select(r => new { r.ContractId, r.PhoneNumber, r.SourceFile })
+            .ToListAsync();
+
+        var existingKeys = new HashSet<string>(
+            existing.Select(e => $"{e.ContractId}|{e.PhoneNumber}|{e.SourceFile}"));
+
+        var newRecords = recordList
+            .Where(r => !existingKeys.Contains($"{r.ContractId}|{r.PhoneNumber}|{r.SourceFile}"))
+            .ToList();
+
+        var skipped = recordList.Count - newRecords.Count;
+
+        foreach (var chunk in newRecords.Chunk(chunkSize))
         {
             _db.SmsRecords.AddRange(chunk);
             await _db.SaveChangesAsync();
         }
+
+        return skipped;
     }
 
     public async Task UpdateRangeAsync(IEnumerable<SmsRecord> records)

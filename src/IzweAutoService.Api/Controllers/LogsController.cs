@@ -17,7 +17,7 @@ public class LogsController : ControllerBase
     {
         var logs = await _repo.GetRecentAsync(count);
         return Ok(logs.Select(l => new ProcessingLogDto(
-            l.Id, l.StartedAt, l.CompletedAt, l.TotalFound, l.TotalSent, l.TotalFailed, l.ErrorMessage
+            l.Id, l.StartedAt, l.CompletedAt, l.TotalFound, l.TotalSent, l.TotalFailed, l.TotalSkipped, l.ErrorMessage
         )));
     }
 }

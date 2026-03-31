@@ -20,6 +20,14 @@ public class ProcessingLogRepository : IProcessingLogRepository
 
     public async Task UpdateAsync(ProcessingLog log)
     {
+        // Detach any other tracked entities that may be in a failed state,
+        // so this save always succeeds (critical for error recording)
+        foreach (var entry in _db.ChangeTracker.Entries().ToList())
+        {
+            if (entry.Entity is not ProcessingLog)
+                entry.State = EntityState.Detached;
+        }
+
         _db.ProcessingLogs.Update(log);
         await _db.SaveChangesAsync();
     }

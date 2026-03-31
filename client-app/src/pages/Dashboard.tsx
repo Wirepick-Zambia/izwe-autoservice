@@ -92,6 +92,7 @@ export default function Dashboard() {
                 <th>Found</th>
                 <th>Sent</th>
                 <th>Failed</th>
+                <th>Skipped</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -105,6 +106,7 @@ export default function Dashboard() {
                   <td>{log.totalFound}</td>
                   <td>{log.totalSent}</td>
                   <td className={log.totalFailed > 0 ? 'text-danger' : ''}>{log.totalFailed}</td>
+                  <td className={log.totalSkipped > 0 ? 'text-warning' : ''}>{log.totalSkipped}</td>
                   <td>
                     {log.errorMessage
                       ? <span className="badge badge-danger">Error</span>

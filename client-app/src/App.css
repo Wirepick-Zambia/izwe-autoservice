@@ -487,3 +487,8 @@ tr:hover td {
   color: #ef4444;
   font-weight: 600;
 }
+
+.text-warning {
+  color: #f59e0b;
+  font-weight: 600;
+}

@@ -52,6 +52,7 @@ public class SmsProcessingService
 
             // Step 2: Parse and save records (streamed + chunked inserts)
             var totalParsed = 0;
+            var totalSkipped = 0;
             foreach (var file in files)
             {
                 try
@@ -59,8 +60,11 @@ public class SmsProcessingService
                     var records = _fileProcessor.ParseCsvFile(file, senderId, clientId).ToList();
                     if (records.Count > 0)
                     {
-                        await _smsRepo.AddBatchAsync(records);
+                        var skipped = await _smsRepo.AddBatchAsync(records);
                         totalParsed += records.Count;
+                        totalSkipped += skipped;
+                        if (skipped > 0)
+                            _logger.LogWarning("Skipped {Skipped} duplicate records from {File}", skipped, file);
                     }
                     _fileProcessor.MoveToProcessed(file);
                 }
@@ -121,6 +125,7 @@ public class SmsProcessingService
             log.TotalFound = totalParsed + pending.Count;
             log.TotalSent = sent;
             log.TotalFailed = failed;
+            log.TotalSkipped = totalSkipped;
             log.CompletedAt = DateTime.UtcNow;
             await _logRepo.UpdateAsync(log);
 

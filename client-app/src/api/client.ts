@@ -30,6 +30,7 @@ export interface ProcessingLog {
   totalFound: number;
   totalSent: number;
   totalFailed: number;
+  totalSkipped: number;
   errorMessage: string | null;
 }
 

@@ -34,6 +34,7 @@ export default function Logs() {
                 <th>Found</th>
                 <th>Sent</th>
                 <th>Failed</th>
+                <th>Skipped</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -48,6 +49,7 @@ export default function Logs() {
                   <td>{log.totalFound}</td>
                   <td>{log.totalSent}</td>
                   <td className={log.totalFailed > 0 ? 'text-danger' : ''}>{log.totalFailed}</td>
+                  <td className={log.totalSkipped > 0 ? 'text-warning' : ''}>{log.totalSkipped}</td>
                   <td>
                     {log.errorMessage
                       ? <span className="badge badge-danger">Error</span>
@@ -102,6 +104,10 @@ export default function Logs() {
             <div className="detail-row">
               <span className="detail-label">Failed</span>
               <span className={`detail-value${selected.totalFailed > 0 ? ' text-danger' : ''}`}>{selected.totalFailed}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Skipped (duplicates)</span>
+              <span className={`detail-value${selected.totalSkipped > 0 ? ' text-warning' : ''}`}>{selected.totalSkipped}</span>
             </div>
             {selected.errorMessage && (
               <div className="detail-row detail-full">
